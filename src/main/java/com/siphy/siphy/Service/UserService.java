@@ -1,8 +1,7 @@
 package com.siphy.siphy.Service;
 
+import com.siphy.siphy.Model.User;
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.catalina.User;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 

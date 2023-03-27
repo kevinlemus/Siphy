@@ -1,14 +1,18 @@
 package com.siphy.siphy.Service.Impl;
 
 import com.siphy.siphy.DAO.UserRepository;
+import com.siphy.siphy.Model.User;
+import com.siphy.siphy.Service.Exceptions.InvalidCredentialsException;
+import com.siphy.siphy.Service.Exceptions.UserNotFoundException;
+import com.siphy.siphy.Service.Exceptions.UsernameAlreadyExists;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 
 public class UserServiceImpl implements UserService {
 
@@ -25,7 +29,7 @@ public class UserServiceImpl implements UserService {
             session.setAttribute("loggedInUser", u);
             return true;
         }else{
-            return false;
+            throw new InvalidCredentialsException("The provided credentials were incorrect.");
         }
     }
 
@@ -50,17 +54,57 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateUser(User user, String username) {
-        return null;
+        Optional<User> optionalUser = userRepository.findById(username);
+        if(optionalUser.isPresent()){
+            User existingUser = optionalUser.get();
+            if(user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())){
+                if(userRepository.existsByUsername(user.getUsername())){
+                    throw new UsernameAlreadyExists("Username is already taken");
+                }
+                existingUser.setUsername(user.getUsername());
+            }
+            if(user.getPassword() != null){
+                existingUser.setPassword(user.getPassword());
+            }
+            if(user.getFirstName() != null){
+                existingUser.setFirstName(user.getFirstName());
+            }
+            if(user.getLastName() != null){
+                existingUser.setLastName(user.getLastName());
+            }
+            if(user.getEmail() != null){
+                existingUser.setEmail(user.getEmail());
+            }
+            if(user.getGender() != null){
+                existingUser.setGender(user.getGender());
+            }
+            if(user.getDateOfBirth() != null){
+                existingUser.setDateOfBirth(user.getDateOfBirth());
+            }
+
+            return userRepository.save(existingUser);
+        }else{
+            throw new UserNotFoundException("No user with the username "+username+" was found.");
+        }
     }
 
     @Override
     public List<User> getAllUsers() {
-        return null;
+        List<User> allUsers = userRepository.findAll();
+        if(!allUsers.isEmpty()) {
+            throw new UserNotFoundException("No users were found.");
+        }
+            return allUsers;
     }
 
     @Override
     public User getByUsername(String username) {
-        return null;
+        Optional<User> user = userRepository.findById(username);
+        if(user.isPresent()){
+            return user.get();
+        }else{
+            throw new UserNotFoundException("There is no existing account with the username "+username+".");
+        }
     }
 
     @Override
