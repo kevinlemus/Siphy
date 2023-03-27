@@ -2,15 +2,15 @@ package com.siphy.siphy.Service.Impl;
 
 import com.siphy.siphy.DAO.UserRepository;
 import com.siphy.siphy.Model.User;
-import com.siphy.siphy.Service.Exceptions.InvalidCredentialsException;
-import com.siphy.siphy.Service.Exceptions.UserNotFoundException;
-import com.siphy.siphy.Service.Exceptions.UsernameAlreadyExists;
+import com.siphy.siphy.Security.Password;
+import com.siphy.siphy.Service.Exceptions.*;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,12 +59,20 @@ public class UserServiceImpl implements UserService {
             User existingUser = optionalUser.get();
             if(user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())){
                 if(userRepository.existsByUsername(user.getUsername())){
-                    throw new UsernameAlreadyExists("Username is already taken");
+                    throw new UsernameAlreadyExists("Username is already taken.");
                 }
                 existingUser.setUsername(user.getUsername());
             }
-            if(user.getPassword() != null){
-                existingUser.setPassword(user.getPassword());
+            if(user.getPassword() != null && !user.getPassword().equals(existingUser.getPassword())){
+                if(user.getConfirmPassword() == null || !user.getConfirmPassword().equals(user.getPassword())){
+                    throw new PasswordMismatchException("Passwords do not match.");
+                }
+                if(existingUser.getPreviousPasswords().stream().anyMatch(p -> passwordEncoder.matches(user.getPassword(), String.valueOf(p)))){
+                    throw new InvalidPasswordException("Password has already been used.");
+                }
+                Password newPassword = new Password(passwordEncoder.encode(user.getPassword()), LocalDate.now());
+                existingUser.getPreviousPasswords().add(newPassword);
+                existingUser.setPassword(newPassword.getHashedPassword());
             }
             if(user.getFirstName() != null){
                 existingUser.setFirstName(user.getFirstName());
@@ -91,7 +99,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         List<User> allUsers = userRepository.findAll();
-        if(!allUsers.isEmpty()) {
+        if(allUsers.isEmpty()) {
             throw new UserNotFoundException("No users were found.");
         }
             return allUsers;

@@ -1,6 +1,6 @@
 package com.siphy.siphy.Model;
 
-import com.siphy.siphy.Util.Category;
+import com.siphy.siphy.Util.SifInfo.Category;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 

@@ -5,13 +5,10 @@ import com.siphy.siphy.Model.User;
 import com.siphy.siphy.Service.Exceptions.UserNotFoundException;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.function.EntityResponse;
 
 import java.util.List;
 
@@ -35,7 +32,6 @@ public class UserController {
                     .header("loggedIn", "Success")
                     .header("message", message)
                     .body(user);
-
 
         }else{
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

@@ -1,4 +1,4 @@
-package com.siphy.siphy.Util;
+package com.siphy.siphy.Util.UserInfo;
 
 import org.springframework.cglib.core.Local;
 

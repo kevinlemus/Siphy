@@ -1,4 +1,4 @@
-package com.siphy.siphy.Util;
+package com.siphy.siphy.Util.UserInfo;
 
 public enum Role {
     User,

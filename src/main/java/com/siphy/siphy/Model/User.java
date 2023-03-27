@@ -1,16 +1,21 @@
 package com.siphy.siphy.Model;
 
-import com.siphy.siphy.Util.Gender;
-import com.siphy.siphy.Util.Role;
+import com.siphy.siphy.Security.Password;
+import com.siphy.siphy.Util.UserInfo.Gender;
+import com.siphy.siphy.Util.UserInfo.Role;
+import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-
 import java.time.LocalDate;
+import java.util.List;
 
+@Entity
 public class User {
 
     @Id
     private String username;
     private String password;
+    private String confirmPassword;
+    private List<Password> previousPasswords;
     private String firstName;
     private String lastName;
     private String email;
@@ -41,6 +46,22 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+
+    public List<Password> getPreviousPasswords() {
+        return previousPasswords;
+    }
+
+    public void setPreviousPasswords(List<Password> previousPasswords) {
+        this.previousPasswords = previousPasswords;
     }
 
     public String getFirstName() {
@@ -82,4 +103,5 @@ public class User {
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
+
 }
