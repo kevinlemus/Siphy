@@ -12,6 +12,12 @@ public class Password {
         this.dateLastUsed = dateLastUsed;
     }
 
+    public Password(String hashedPassword){
+        this.hashedPassword = hashedPassword;
+    }
+
+    public Password(){}
+
     public String getHashedPassword() {
         return hashedPassword;
     }

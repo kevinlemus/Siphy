@@ -13,8 +13,8 @@ public class User {
 
     @Id
     private String username;
-    private String password;
-    private String confirmPassword;
+    private Password password;
+    private Password confirmPassword;
     private List<Password> previousPasswords;
     private String firstName;
     private String lastName;
@@ -40,19 +40,19 @@ public class User {
         this.username = username;
     }
 
-    public String getPassword() {
+    public Password getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(Password password) {
         this.password = password;
     }
 
-    public String getConfirmPassword() {
+    public Password getConfirmPassword() {
         return confirmPassword;
     }
 
-    public void setConfirmPassword(String confirmPassword) {
+    public void setConfirmPassword(Password confirmPassword) {
         this.confirmPassword = confirmPassword;
     }
 

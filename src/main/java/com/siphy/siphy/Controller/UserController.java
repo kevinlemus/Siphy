@@ -2,6 +2,7 @@ package com.siphy.siphy.Controller;
 
 import com.siphy.siphy.DAO.UserRepository;
 import com.siphy.siphy.Model.User;
+import com.siphy.siphy.Security.Password;
 import com.siphy.siphy.Service.Exceptions.UserNotFoundException;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;

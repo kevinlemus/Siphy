@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +26,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean login(String username, String password, HttpServletRequest request) {
         User u = userRepository.findByUsername(username);
-        if(u != null && passwordEncoder.matches(password, u.getPassword())){
+        if(u != null && passwordEncoder.matches(password, u.getPassword().toString())){
             HttpSession session = request.getSession();
             session.setAttribute("loggedInUser", u);
             return true;
@@ -41,15 +43,35 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    List<String> requirements = Arrays.asList(
+            "At least 8 characters long",
+            "Contains at least one digit",
+            "Contains at least one lowercase letter",
+            "Contains at least one uppercase letter",
+            "Contains at least one special character (@#$%^&+=)"
+    );
+
     @Override
     public User register(User user) {
         String username = user.getUsername();
         User u = userRepository.findByUsername(username);
-        if(u==null) {
-            return userRepository.save(user);
-        }else{
+        if(u!=null) {
             throw new RuntimeException("Username is already taken");
         }
+        String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$){8,}";
+        if(!user.getPassword().togit String().matches(regex)){
+            throw new InvalidPasswordException("Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 8 characters long");
+        }
+        if(!user.getPassword().equals(user.getConfirmPassword())){
+            throw new PasswordMismatchException("Passwords do not match.");
+        }
+
+        Password hashedPassword = new Password(passwordEncoder.encode(user.getPassword().toString()));
+        user.setPassword(hashedPassword);
+        user.getPreviousPasswords().add(hashedPassword);
+
+        return userRepository.save(user);
+
     }
 
     @Override
@@ -67,12 +89,14 @@ public class UserServiceImpl implements UserService {
                 if(user.getConfirmPassword() == null || !user.getConfirmPassword().equals(user.getPassword())){
                     throw new PasswordMismatchException("Passwords do not match.");
                 }
-                if(existingUser.getPreviousPasswords().stream().anyMatch(p -> passwordEncoder.matches(user.getPassword(), String.valueOf(p)))){
+                if(existingUser.getPreviousPasswords().stream().anyMatch(p -> passwordEncoder.matches(user.getPassword().toString(), String.valueOf(p)))){
                     throw new InvalidPasswordException("Password has already been used.");
                 }
-                Password newPassword = new Password(passwordEncoder.encode(user.getPassword()), LocalDate.now());
-                existingUser.getPreviousPasswords().add(newPassword);
-                existingUser.setPassword(newPassword.getHashedPassword());
+                Password oldPassword = existingUser.getPassword();//creating a way to change properties of our old password
+                oldPassword.setDateLastUsed(LocalDate.now());//we are setting the last date it was used before changing the password
+                Password newPassword = new Password(passwordEncoder.encode(user.getPassword().toString()));//created a password instance with and set the hashed password in the constructor
+                existingUser.getPreviousPasswords().add(newPassword);//adding the new password to all passwords the user has used.
+                existingUser.setPassword(newPassword);//changing password to the new password
             }
             if(user.getFirstName() != null){
                 existingUser.setFirstName(user.getFirstName());
