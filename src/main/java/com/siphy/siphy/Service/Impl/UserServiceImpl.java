@@ -43,14 +43,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    List<String> requirements = Arrays.asList(
-            "At least 8 characters long",
-            "Contains at least one digit",
-            "Contains at least one lowercase letter",
-            "Contains at least one uppercase letter",
-            "Contains at least one special character (@#$%^&+=)"
-    );
-
     @Override
     public User register(User user) {
         String username = user.getUsername();
@@ -58,12 +50,63 @@ public class UserServiceImpl implements UserService {
         if(u!=null) {
             throw new RuntimeException("Username is already taken");
         }
+        if(user.getUsername().isEmpty()){
+            throw new RuntimeException("Username must not be empty");
+        }
+        if(user.getFirstName().isEmpty()){
+            throw new RuntimeException("First name cannot be empty");
+        }
+        if(user.getLastName().isEmpty()){
+            throw new RuntimeException("Last name cannot be empty");
+        }
+        if(user.getGender() == null){
+            throw new RuntimeException("Must select a gender option");
+        }
+
         String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$){8,}";
-        if(!user.getPassword().togit String().matches(regex)){
-            throw new InvalidPasswordException("Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 8 characters long");
+        String missingRequirements = "";
+        List<String> requirements = Arrays.asList(
+                "At least 8 characters long",
+                "Contains at least one digit",
+                "Contains at least one lowercase letter",
+                "Contains at least one uppercase letter",
+                "Contains at least one special character (@#$%^&+=)",
+                "Cannot have empty spaces"
+        );
+
+
+        String stringPassword = user.getPassword().toString();
+        if(stringPassword.length()<8){
+            missingRequirements += requirements.get(0) + ", ";
+        }
+        if(stringPassword.matches(".*[0-9]")){
+            missingRequirements += requirements.get(1) + ", ";
+        }
+        if(stringPassword.matches(".*[a-z]")){
+            missingRequirements += requirements.get(2) + ", ";
+        }
+        if(stringPassword.matches(".*[A-Z]")){
+            missingRequirements += requirements.get(3) + ", ";
+        }
+        if(stringPassword.matches(".*[@#$%^&+=]")){
+            missingRequirements += requirements.get(4) + ", ";
+        }
+        if(stringPassword.contains(" ")){
+            missingRequirements += requirements.get(5) + ", ";
+        }
+
+
+        if(stringPassword.matches(regex)){
+            throw new InvalidPasswordException("Password does not meet the following requirements: "+missingRequirements);
         }
         if(!user.getPassword().equals(user.getConfirmPassword())){
             throw new PasswordMismatchException("Passwords do not match.");
+        }
+        if(user.getDateOfBirth() == null){
+            throw new RuntimeException("Must enter your date of birth");
+        }
+        if(user.getDateOfBirth() != null && user.getDateOfBirth().isAfter(LocalDate.now())){
+            throw new RuntimeException("Date of birth cannot be in the future.");
         }
 
         Password hashedPassword = new Password(passwordEncoder.encode(user.getPassword().toString()));

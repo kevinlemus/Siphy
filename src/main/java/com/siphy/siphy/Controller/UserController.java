@@ -23,7 +23,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<User> login(@RequestBody User loginRequest, HttpServletRequest request){
         String username = loginRequest.getUsername();
-        String password = loginRequest.getPassword();
+        String password = loginRequest.getPassword().toString();
         boolean loggedIn = userService.login(username, password, request);
 
         if(loggedIn){
@@ -45,7 +45,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @PostMapping("/register")
+    @PostMapping("/registerUser")
     public ResponseEntity<User> register(@RequestBody User user){
         return new ResponseEntity<User>(userService.register(user), HttpStatus.CREATED);
     }
