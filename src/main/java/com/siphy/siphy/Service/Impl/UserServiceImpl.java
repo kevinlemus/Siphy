@@ -139,19 +139,30 @@ public class UserServiceImpl implements UserService {
         Optional<User> optionalUser = userRepository.findById(username);
         if(optionalUser.isPresent()){
             User existingUser = optionalUser.get();
+            boolean isAdmin = user.getRole().equals(Role.Admin);
+            boolean isUpdatingOwnInfo = user.getUsername().equals(existingUser.getUsername());
+
+            if(!isAdmin && !isUpdatingOwnInfo){
+                throw new UnauthorizedException("You are not authorized to update this account.");
+            }
             if(user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())){
                 if(userRepository.existsByUsername(user.getUsername())){
                     throw new UsernameAlreadyExists("Username is already taken.");
                 }
                 existingUser.setUsername(user.getUsername());
             }
+
             if(user.getPassword() != null && !user.getPassword().equals(existingUser.getPassword())){
+
+                validatePassword(user.getPassword().toString());
+
                 if(user.getConfirmPassword() == null || !user.getConfirmPassword().equals(user.getPassword())){
                     throw new PasswordMismatchException("Passwords do not match.");
                 }
                 if(existingUser.getPreviousPasswords().stream().anyMatch(p -> passwordEncoder.matches(user.getPassword().toString(), String.valueOf(p)))){
                     throw new InvalidPasswordException("Password has already been used.");
                 }
+
                 Password oldPassword = existingUser.getPassword();//creating a way to change properties of our old password
                 oldPassword.setDateLastUsed(LocalDate.now());//we are setting the last date it was used before changing the password
                 Password newPassword = new Password(passwordEncoder.encode(user.getPassword().toString()));//created a password instance with and set the hashed password in the constructor
@@ -165,12 +176,19 @@ public class UserServiceImpl implements UserService {
                 existingUser.setLastName(user.getLastName());
             }
             if(user.getEmail() != null){
+                EmailValidator emailValidator = EmailValidator.getInstance();
+                if (!emailValidator.isValid(user.getEmail())) {
+                    throw new RuntimeException("Invalid email address");
+                }
                 existingUser.setEmail(user.getEmail());
             }
             if(user.getGender() != null){
                 existingUser.setGender(user.getGender());
             }
             if(user.getDateOfBirth() != null){
+                if(user.getDateOfBirth().isAfter(LocalDate.now())){
+                    throw new RuntimeException("Date of birth cannot be in the future.");
+                }
                 existingUser.setDateOfBirth(user.getDateOfBirth());
             }
 
