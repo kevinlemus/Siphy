@@ -7,21 +7,24 @@ import com.siphy.siphy.Service.Exceptions.*;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
     @Autowired
-    PasswordEncoder passwordEncoder;
+    BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public boolean login(String username, String password, HttpServletRequest request) {
@@ -43,6 +46,48 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    private void validatePassword(String password) {
+        String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$){8,}";
+        String[] requirements = {
+                "At least 8 characters long",
+                "Contains at least one digit",
+                "Contains at least one lowercase letter",
+                "Contains at least one uppercase letter",
+                "Contains at least one special character (@#$%^&+=)",
+                "Cannot have empty spaces"
+        };
+        List<String> missingRequirements = new ArrayList<>();
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(password);
+        if (!matcher.matches()) {
+            for (int i = 0; i < requirements.length; i++) {
+                if (!password.matches(".*[" + getRegexForRequirement(i) + "]")) {
+                    missingRequirements.add(requirements[i]);
+                }
+            }
+            throw new InvalidPasswordException("Password does not meet the following requirements: " + String.join(", ", missingRequirements));
+        }
+    }
+
+    private String getRegexForRequirement(int index) {
+        switch (index) {
+            case 0:
+                return "";
+            case 1:
+                return "0-9";
+            case 2:
+                return "a-z";
+            case 3:
+                return "A-Z";
+            case 4:
+                return "@#$%^&+=";
+            case 5:
+                return " ";
+            default:
+                return "";
+        }
+    }
     @Override
     public User register(User user) {
         String username = user.getUsername();
@@ -59,46 +104,14 @@ public class UserServiceImpl implements UserService {
         if(user.getLastName().isEmpty()){
             throw new RuntimeException("Last name cannot be empty");
         }
+        EmailValidator emailValidator = EmailValidator.getInstance();
+        if (!emailValidator.isValid(user.getEmail())) {
+            throw new RuntimeException("Invalid email address");
+        }
         if(user.getGender() == null){
             throw new RuntimeException("Must select a gender option");
         }
-
-        String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$){8,}";
-        String missingRequirements = "";
-        List<String> requirements = Arrays.asList(
-                "At least 8 characters long",
-                "Contains at least one digit",
-                "Contains at least one lowercase letter",
-                "Contains at least one uppercase letter",
-                "Contains at least one special character (@#$%^&+=)",
-                "Cannot have empty spaces"
-        );
-
-
-        String stringPassword = user.getPassword().toString();
-        if(stringPassword.length()<8){
-            missingRequirements += requirements.get(0) + ", ";
-        }
-        if(stringPassword.matches(".*[0-9]")){
-            missingRequirements += requirements.get(1) + ", ";
-        }
-        if(stringPassword.matches(".*[a-z]")){
-            missingRequirements += requirements.get(2) + ", ";
-        }
-        if(stringPassword.matches(".*[A-Z]")){
-            missingRequirements += requirements.get(3) + ", ";
-        }
-        if(stringPassword.matches(".*[@#$%^&+=]")){
-            missingRequirements += requirements.get(4) + ", ";
-        }
-        if(stringPassword.contains(" ")){
-            missingRequirements += requirements.get(5) + ", ";
-        }
-
-
-        if(stringPassword.matches(regex)){
-            throw new InvalidPasswordException("Password does not meet the following requirements: "+missingRequirements);
-        }
+        validatePassword(user.getPassword().toString());
         if(!user.getPassword().equals(user.getConfirmPassword())){
             throw new PasswordMismatchException("Passwords do not match.");
         }
