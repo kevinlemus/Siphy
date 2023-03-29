@@ -5,6 +5,8 @@ import com.siphy.siphy.Model.User;
 import com.siphy.siphy.Security.Password;
 import com.siphy.siphy.Service.Exceptions.*;
 import com.siphy.siphy.Service.UserService;
+import com.siphy.siphy.Util.UserInfo.Role;
+import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -95,7 +97,7 @@ public class UserServiceImpl implements UserService {
         if(u!=null) {
             throw new RuntimeException("Username is already taken");
         }
-        if(user.getUsername().isEmpty()){
+        if(StringUtils.isEmpty(user.getUsername())){
             throw new RuntimeException("Username must not be empty");
         }
         if(user.getFirstName().isEmpty()){
@@ -111,7 +113,9 @@ public class UserServiceImpl implements UserService {
         if(user.getGender() == null){
             throw new RuntimeException("Must select a gender option");
         }
+
         validatePassword(user.getPassword().toString());
+
         if(!user.getPassword().equals(user.getConfirmPassword())){
             throw new PasswordMismatchException("Passwords do not match.");
         }
@@ -196,7 +200,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(String username) {
-        userRepository.deleteById(username);
+    public void delete(String username, User requester) {
+        User userToDelete = userRepository.findByUsername(username);
+        boolean isAdmin = requester.getRole().equals(Role.Admin);
+        if (isAdmin) {
+            userRepository.delete(userToDelete);
+        } else if (requester.getUsername().equals(username)) {
+            userRepository.delete(userToDelete);
+        } else {
+            throw new UnauthorizedException("You are not authorized to delete this account.");
+        }
     }
 }

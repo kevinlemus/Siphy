@@ -51,8 +51,8 @@ public class UserController {
     }
 
     @PostMapping("{username}")
-    public ResponseEntity<String> delete(@PathVariable("username") String username){
-        userService.delete(username);
+    public ResponseEntity<String> delete(@PathVariable("username") String username, @RequestBody User requester){
+        userService.delete(username, requester);
         return new ResponseEntity<String>("Your account has been deleted", HttpStatus.OK);
     }
 
