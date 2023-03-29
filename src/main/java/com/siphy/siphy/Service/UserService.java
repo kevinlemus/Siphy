@@ -12,7 +12,7 @@ public interface UserService {
     User register(User user);
     User updateUser(User user, String username);
     List<User> getAllUsers();
-    User getByUsername(String username);
+    User getByUsername(String username, User requester);
     void delete(String username, User requester);
 
 }

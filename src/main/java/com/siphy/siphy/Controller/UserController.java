@@ -3,6 +3,7 @@ package com.siphy.siphy.Controller;
 import com.siphy.siphy.DAO.UserRepository;
 import com.siphy.siphy.Model.User;
 import com.siphy.siphy.Security.Password;
+import com.siphy.siphy.Service.Exceptions.UnauthorizedException;
 import com.siphy.siphy.Service.Exceptions.UserNotFoundException;
 import com.siphy.siphy.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,17 +52,25 @@ public class UserController {
     }
 
     @PostMapping("{username}")
-    public ResponseEntity<String> delete(@PathVariable("username") String username, @RequestBody User requester){
-        userService.delete(username, requester);
-        return new ResponseEntity<String>("Your account has been deleted", HttpStatus.OK);
+    public ResponseEntity<String> delete(@PathVariable("username") String username, @RequestBody User requester) {
+        try {
+            userService.delete(username, requester);
+            return new ResponseEntity<String>("Your account has been deleted", HttpStatus.OK);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (UnauthorizedException d) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @GetMapping("{username}")
-    public ResponseEntity<User> getByUsername(@PathVariable("username") String username){
+    public ResponseEntity<User> getByUsername(@PathVariable("username") String username, @RequestBody User requester){
         try {
-            return new ResponseEntity<User>(userService.getByUsername(username), HttpStatus.OK);
-        }catch(UserNotFoundException e){
+            return new ResponseEntity<User>(userService.getByUsername(username, requester), HttpStatus.OK);
+        } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (UnauthorizedException d) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 

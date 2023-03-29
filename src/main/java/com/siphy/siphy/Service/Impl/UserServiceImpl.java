@@ -190,10 +190,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getByUsername(String username) {
+    public User getByUsername(String username, User requester) {
         Optional<User> user = userRepository.findById(username);
+        boolean isAdmin = requester.getRole().equals(Role.Admin);
         if(user.isPresent()){
-            return user.get();
+            if (isAdmin) {
+                return user.get();
+            } else if (requester.getUsername().equals(username)){
+                return user.get();
+            } else {
+                throw new UnauthorizedException("You are not authorized to retrieve this account's information.");
+            }
         }else{
             throw new UserNotFoundException("There is no existing account with the username "+username+".");
         }
